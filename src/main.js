@@ -36,7 +36,6 @@ async function onSubmit(event) {
 
   clearGallery();
   hideLoadMoreBtn();
-
   showLoader();
 
   try {
@@ -56,8 +55,14 @@ async function onSubmit(event) {
 
     createGallery(hits);
 
+    // ✅ ВИПРАВЛЕННЯ ТУТ
     if (page < totalPages) {
       showLoadMoreBtn();
+    } else {
+      hideLoadMoreBtn();
+      iziToast.info({
+        message: "We're sorry, but you've reached the end of search results.",
+      });
     }
   } catch (error) {
     iziToast.error({
