@@ -7,6 +7,8 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  showLoadMoreBtn,
+  hideLoadMoreBtn,
 } from './js/render-functions.js';
 
 const refs = {
@@ -17,6 +19,7 @@ const refs = {
 
 let currentQuery = '';
 let page = 1;
+let totalPages = 0;
 
 refs.form.addEventListener('submit', onSubmit);
 refs.loadMoreBtn.addEventListener('click', onLoadMore);
@@ -29,16 +32,18 @@ async function onSubmit(event) {
 
   currentQuery = query;
   page = 1;
+  totalPages = 0;
 
   clearGallery();
-  refs.loadMoreBtn.classList.remove('is-visible');
+  hideLoadMoreBtn();
 
   showLoader();
 
   try {
     const data = await getImagesByQuery(query, page);
+
     const hits = data.hits;
-    const totalPages = Math.ceil(data.totalHits / 15);
+    totalPages = Math.ceil(data.totalHits / 15);
 
     if (!hits.length) {
       iziToast.error({
@@ -51,12 +56,8 @@ async function onSubmit(event) {
 
     createGallery(hits);
 
-    if (totalPages > 1) {
-      refs.loadMoreBtn.classList.add('is-visible');
-    } else {
-      iziToast.info({
-        message: "We're sorry, but you've reached the end of search results.",
-      });
+    if (page < totalPages) {
+      showLoadMoreBtn();
     }
   } catch (error) {
     iziToast.error({
@@ -70,24 +71,23 @@ async function onSubmit(event) {
 async function onLoadMore() {
   page += 1;
 
+  hideLoadMoreBtn();
   showLoader();
 
   try {
     const data = await getImagesByQuery(currentQuery, page);
+
     const hits = data.hits;
-    const totalPages = Math.ceil(data.totalHits / 15);
 
     if (!hits.length) {
-      refs.loadMoreBtn.classList.remove('is-visible');
-
       iziToast.info({
         message: "We're sorry, but you've reached the end of search results.",
       });
-
       return;
     }
 
     createGallery(hits);
+
     const card = document.querySelector('.gallery li');
 
     if (card) {
@@ -99,9 +99,9 @@ async function onLoadMore() {
       });
     }
 
-    if (page >= totalPages) {
-      refs.loadMoreBtn.classList.remove('is-visible');
-
+    if (page < totalPages) {
+      showLoadMoreBtn();
+    } else {
       iziToast.info({
         message: "We're sorry, but you've reached the end of search results.",
       });
